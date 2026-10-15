@@ -4,6 +4,7 @@ from .schemas import TOOLS
 
 from .main import LLMChannel, ReActAgent
 from .tools import register_tools
+import pytest
 
 
 def test_LLMchannel_init():
@@ -14,8 +15,8 @@ def test_LLMchannel_init():
 
 def test_errorapikey_LLMchannel_init():
     agent = LLMChannel(api_key="invalid_key")
-    response = agent.send_request([{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": "Hello!"}])
-
+    with pytest.raises(Exception, match="401"):
+        agent.send_request([{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": "Hello!"}])
 
 def test_tools():
     agent = LLMChannel()
