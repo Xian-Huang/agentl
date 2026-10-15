@@ -19,8 +19,11 @@ class LLMChannel:
     def send_request(self, messages: list, tools: list = None, temperature: float = 0.7, max_tokens: int = 150):
 
         headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
-        payload = {"model": self.model, "temperature": temperature, "messages": messages, "tools": tools, "max_tokens": max_tokens}
-
+        payload = {"model": self.model, "temperature": temperature, "messages": messages, "max_tokens": max_tokens}
+        
+        if tools:
+            payload["tools"] = tools
+        
         resp = httpx.post(url=f"{self.base_url}/v1/chat/completions", headers=headers, json=payload, timeout=30)
         if resp.status_code != 200:
             raise Exception(f"Request failed with status code {resp.status_code}: {resp.text}")
@@ -61,11 +64,12 @@ class ReActAgent():
         trace = {"tool_call": tool_call, "function_name": function_name, "function_args": function_args}
         self.trace.append(trace)
         
-        
         if function_name in register_tools:
             tool_result = register_tools[function_name](**function_args)
-            trace["tool_result"] = tool_result
+            trace["tool_result"] = str(tool_result)
             return tool_result
+        else:
+            raise Exception(f"Function {function_name} is not registered in register_tools.")
         
     
     def chat(self, input, tools: list = None, temperature: float = 0.7, max_tokens: int = 150):
@@ -82,5 +86,5 @@ class ReActAgent():
             if not response.get("tool_calls"):
                 return response
             for tool_call in response.get("tool_calls", []):
-                tool_result = self._excecute_tool(tool_call)
-                self.messages.append({"role": "tool", "content": tool_result})
+                tool_result = self._execute_tool(tool_call)
+                self.messages.append({"role": "tool","tool_call_id":tool_call['id'], "content": tool_result})
