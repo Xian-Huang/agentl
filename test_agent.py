@@ -1,10 +1,11 @@
 import json
 
-from .schemas import TOOLS
 
 from .main import LLMChannel, ReActAgent
-from .tools import register_tools
+from .register import get_tools_schema, get_tool
 import pytest
+
+TOOLS = get_tools_schema()
 
 
 def test_LLMchannel_init():
@@ -18,6 +19,7 @@ def test_errorapikey_LLMchannel_init():
     with pytest.raises(Exception, match="401"):
         agent.send_request([{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": "Hello!"}])
 
+
 def test_tools():
     agent = LLMChannel()
     messages = [{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": "天津告诉我今天天气"}]
@@ -28,7 +30,8 @@ def test_tools():
     for tool_call in response["tool_calls"]:
         function_name = tool_call["function"]["name"]
         function_args = json.loads(tool_call["function"]["arguments"])
-        tool_result = register_tools[function_name](**function_args)
+        function = get_tool(function_name)
+        tool_result = function.excute(**function_args)
 
         assert function_name in [tool["function"]["name"] for tool in TOOLS], f"Function {function_name} is not defined in TOOLS"
         assert function_args is not None, f"Function {function_name} was called without arguments"
