@@ -3,7 +3,7 @@ requires = ["setuptools>=75"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "aegntl"
+name = "agentl"
 version = "0.1.0"
 description = "A runnable, testable and extensible ReAct agent."
 readme = "README.md"
@@ -20,9 +20,10 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["aegntl"]
-package-dir = { aegntl = "." }
+packages = ["agentl"]
+package-dir = { agentl = "." }
 include-package-data = false
 
 [tool.pytest.ini_options]
-testpaths = ["test_agent.py"]
+testpaths = ["tests"]
+pythonpath = [".."]

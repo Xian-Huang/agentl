@@ -1,6 +1,6 @@
-# Aegntl
+# Agentl
 
-Aegntl 的目标是成为一个**可运行、可测试、可扩展、可二次开发**的 ReAct Agent。它既可以直接作为命令行 Agent 使用，也可以作为一个 Python 库嵌入其他应用，并通过工具、模型提供者和运行时钩子进行扩展。
+Agentl的目标是成为一个**可运行、可测试、可扩展、可二次开发**的 ReAct Agent。它既可以直接作为命令行 Agent 使用，也可以作为一个 Python 库嵌入其他应用，并通过工具、模型提供者和运行时钩子进行扩展。
 
 ## 1. 目标与边界
 
@@ -94,14 +94,14 @@ CLI / SDK / HTTP API / Web UI
 ### 3.2 推荐目录结构
 
 ```text
-aegntl/
+agentl/
 ├── pyproject.toml
 ├── README.md
 ├── .env.example
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
 ├── src/
-│   └── aegntl/
+│   └── agentl/
 │       ├── __init__.py
 │       ├── interfaces/
 │       │   ├── cli.py

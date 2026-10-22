@@ -11,6 +11,3 @@ class ChatChannel(Protocol):
         temperature: float = 0.7,
         max_tokens: int = 150,
     ) -> dict[str, Any]: ...
-
-    def complete():
-        pass

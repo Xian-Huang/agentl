@@ -26,7 +26,7 @@ class ToolFunction:
         return self.fn(**params)
 
     def get_sechema(self):
-        return {"type": "function", "function": {"name": self.fn.__name__, "desciption": self.fn.__doc__, "parameters": self.model.model_json_schema()}}
+        return {"type": "function", "function": {"name": self.fn.__name__, "description": self.fn.__doc__, "parameters": self.model.model_json_schema()}}
 
 
 _TOOLS: dict[str, ToolFunction] = {}
