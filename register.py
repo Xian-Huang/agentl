@@ -12,6 +12,10 @@ class ToolFnModelError(Exception):
     """Fcuntion model not valid"""
 
 
+class ToolExcuteError(Exception):
+    """Tool excute errir"""
+
+
 class ToolFunction:
 
     def __init__(self, fn: Callable[..., Any] | None = None, model: type[BaseModel] | None = None):
@@ -23,10 +27,20 @@ class ToolFunction:
         self.model = model
 
     def excute(self, **params):
-        return self.fn(**params)
+        try:
+            return self.fn(**params)
+        except Exception as e:
+            raise ToolExcuteError(e)
 
     def get_sechema(self):
-        return {"type": "function", "function": {"name": self.fn.__name__, "description": self.fn.__doc__, "parameters": self.model.model_json_schema()}}
+        return {
+            "type": "function",
+            "function": {
+                "name": self.fn.__name__,
+                "description": self.fn.__doc__,
+                "parameters": self.model.model_json_schema(),
+            },
+        }
 
 
 _TOOLS: dict[str, ToolFunction] = {}
