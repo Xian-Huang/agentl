@@ -59,6 +59,7 @@ def test_chat_executes_tool_and_continues_until_final_answer():
 
     assert result == final_message
     assert len(channel.calls) == 2
+    print(agent.trace)
     assert agent.trace == [
         {
             "tool_call": tool_call,
@@ -147,7 +148,8 @@ def test_trace_is_reset_for_each_chat():
     assert agent.trace == []
 
 
-def test_chat_invalid_tool_arguments_raise_json_error():
+def test_chat_invalid_tool_arguments_returns_error_to_model():
+    """当工具参数不是合法 JSON 时，返回错误给模型而非崩溃"""
     channel = FakeChannel(
         {
             "role": "assistant",
@@ -159,11 +161,23 @@ def test_chat_invalid_tool_arguments_raise_json_error():
                     "function": {"name": "query_order", "arguments": "not-json"},
                 }
             ],
-        }
+        },
+        {"role": "assistant", "content": "抱歉，参数格式有误。"},
     )
     agent = ReActAgent(channel=channel)
-    with pytest.raises(ValueError):
-        agent.chat("invalid", tools=TOOLS)
+
+    result = agent.chat("invalid", tools=TOOLS)
+
+    assert result == {"role": "assistant", "content": "抱歉，参数格式有误。"}
+    assert len(agent.trace) == 1
+    assert agent.trace[0]["function_name"] == "query_order"
+    assert "error" in agent.trace[0]["tool_result"]
+    assert "invalid_tool_arguments" in agent.trace[0]["tool_result"]
+
+    tool_message = channel.calls[1]["messages"][-1]
+    assert tool_message["role"] == "tool"
+    assert tool_message["tool_call_id"] == "call-invalid-1"
+    assert "invalid_tool_arguments" in tool_message["content"]
 
 
 def test_chat_stops_after_max_steps():
