@@ -7,8 +7,10 @@ name = "agentl"
 version = "0.1.0"
 description = "A runnable, testable and extensible ReAct agent."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
+    "typer>=0.9,<1",
+    "rich>=13,<14",
     "httpx>=0.27,<1",
     "pydantic>=2.7,<3",
     "pytz>=2024.1",
@@ -18,6 +20,9 @@ dependencies = [
 dev = [
     "pytest>=8.3,<10",
 ]
+
+[project.scripts]
+agentl = "agentl.cli:app"
 
 [tool.setuptools]
 packages = ["agentl"]

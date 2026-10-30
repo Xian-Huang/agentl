@@ -162,7 +162,7 @@ class ReActAgent:
 
         return trace["tool_result"]
 
-    def chat(self, input, tools: list | None, temperature: float = 0.7, max_tokens: int = 150):
+    def chat(self, input, tools: list | None = None, temperature: float = 0.7, max_tokens: int = 150):
         """
         Chat with the ReAct agent using the provided messages and tools.
         """
