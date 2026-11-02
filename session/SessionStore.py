@@ -1,8 +1,10 @@
 import datetime
 import json
-from typing import Self
+import shutil
 from uuid import uuid4
 import os
+from pathlib import Path
+from agentl.core.config import ROOT_DIR
 
 
 class SessionError(Exception):
@@ -10,59 +12,60 @@ class SessionError(Exception):
 
 
 class Session:
-
-    def __init__(self) -> None:
-        self.id = uuid4()
-        self.created_at = datetime.datetime.now()
-        self.updated_at = datetime.datetime.now()
+    def __init__(self, session_id: str | None = None) -> None:
+        self.id: str = session_id or uuid4().hex
+        self.created_at: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
+        self.updated_at: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
         self.messages: list[dict[str, str]] = []
 
-    # def _init_session(self):
-    #     init_session = {
-    #         "id": str(self.id),
-    #         "created_at": self.created_at.__str__(),
-    #         "updated_at": self.updated_at.__str__(),
-    #         "messages": self.messages,
-    #     }
-    #     session_file_path = os.path.join(self.workspace, f"{self.id.hex}.json")
-    #     if not os.path.exists(session_file_path):
-    #         raise SessionError(f"{session_file_path} not found")
-    #     with open(os.path.join(self.workspace, f"{self.id.hex}.json"), "w") as f:
-    #         json.dump(init_session, f)
-
-    # def _init_workspace(self):
-    #     current_path = os.path.join(*__path__)
-    #     self.workspace = os.path.join(current_path, ".agentl", self.id.hex)
-
-    def get_session(self):
+    def to_dict(self) -> dict:
         return {
-            "id": str(self.id),
-            "created_at": self.created_at.__str__(),
-            "updated_at": self.updated_at.__str__(),
+            "version": 1,
+            "id": self.id,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
             "messages": self.messages,
         }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Session":
+        session = cls(session_id=data["id"])
+        session.created_at = datetime.datetime.fromisoformat(data["created_at"])
+        session.updated_at = datetime.datetime.fromisoformat(data["updated_at"])
+        session.messages = data.get("messages", [])
+        return session
 
 
 class SessionStore:
 
-    def load(self, session: Session):
-        self.session = session
+    def load(self, id: str):
+        session_json_path = ROOT_DIR.joinpath("sessions", id, f"{id}.json")
+        if session_json_path.exists():
+            json_data = json.loads(session_json_path.read_text())
+            return Session.from_dict(json_data)
+        else:
+            raise SessionError(f"Session with id {id} does not exist.")
 
-    def save(self):
-        if not os.path.exists(self.session.workspace):
-            os.path.join(self.session.workspace)
+    def save(self, session: Session):
+        session_workspace = ROOT_DIR.joinpath("sessions", session.id)
+        if not session_workspace.exists():
+            os.makedirs(session_workspace)
 
-        session_file_path = os.path.join(self.session.workspace, f"{self.session.id.hex}.json")
+        session_file_path = os.path.join(session_workspace, f"{session.id}.json")
         with open(session_file_path, "w") as f:
-            json.dump(self.session.get_session(), f)
+            json.dump(session.to_dict(), f)
 
-    def list(self): ...
+    def list(self) -> list[Session]:
+        sessions = []
+        for session_workspace in os.listdir(ROOT_DIR.joinpath("sessions")):
+            session_json_path = os.path.join(session_workspace, f"{session_workspace}.json")
+            if os.path.exists(session_json_path):
+                sessions.append(Session.from_dict(json.loads(open(session_json_path).read())))
+        return sessions
 
-    def delete(self): ...
-
-
-class FilesystemSessionStore:
-    def __init__(self, session: SessionStore):
-        self.session = session
-
-    def save_file(self): ...
+    def delete(self, session: Session):
+        session_workspace = ROOT_DIR.joinpath("sessions", session.id)
+        if session_workspace.exists():
+            shutil.rmtree(session_workspace)
+            return True
+        return False
