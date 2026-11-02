@@ -58,8 +58,9 @@ class SessionStore:
     def list(self) -> list[Session]:
         sessions = []
         for session_workspace in os.listdir(ROOT_DIR.joinpath("sessions")):
-            session_json_path = os.path.join(session_workspace, f"{session_workspace}.json")
-            if os.path.exists(session_json_path):
+            session_json_path = ROOT_DIR.joinpath("sessions", session_workspace, f"{session_workspace}.json")
+            print(session_json_path)
+            if session_json_path.exists():
                 sessions.append(Session.from_dict(json.loads(open(session_json_path).read())))
         return sessions
 

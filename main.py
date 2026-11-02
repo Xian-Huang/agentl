@@ -3,6 +3,8 @@ import os
 import re
 from typing import Any
 import httpx
+
+from .session.SessionStore import Session, SessionStore
 from .provider import ChatChannel
 from .register import get_tool, ToolExcuteError
 from . import tools
@@ -70,7 +72,7 @@ class LLMChannel:
 
 class ReActAgent:
 
-    def __init__(self, channel: ChatChannel, max_steps: int = 8, max_retry: int = 3):
+    def __init__(self, channel: ChatChannel, session: str | None = None, max_steps: int = 8, max_retry: int = 3):
         if max_steps < 1:
             raise ValueError("max_steps must be at least 1")
 
@@ -79,8 +81,13 @@ class ReActAgent:
 
         self._max_retry = max_retry
         self._max_steps = max_steps
+        self.store = SessionStore()
+        if session:
+            self.session = self.store.load(session)
+        else:
+            self.session = Session()
 
-        self.messages: list[Any | dict[str, str]] = [{"role": "system", "content": "You are a helpful assistant."}]
+        self.store.save(self.session)
         self.channel = channel
         self.trace = []
 
@@ -169,15 +176,15 @@ class ReActAgent:
 
         self.trace = []
 
-        self.messages.append({"role": "user", "content": input})
+        self.session.messages.append({"role": "user", "content": input})
         for step in range(self._max_steps):
             response = self.send_messages(
-                messages=self.messages,
+                messages=self.session.messages,
                 tools=tools,
                 temperature=temperature,
                 max_tokens=max_tokens,
             )
-            self.messages.append(response)
+            self.session.messages.append(response)
 
             tool_calls = response.get("tool_calls")
             if not tool_calls:
@@ -185,7 +192,7 @@ class ReActAgent:
 
             for tool_call in tool_calls:
                 tool_result = self._execute_tool(tool_call)
-                self.messages.append(
+                self.session.messages.append(
                     {
                         "role": "tool",
                         "tool_call_id": tool_call["id"],
